@@ -1,0 +1,19 @@
+{
+    "name": "webpower/luasandbox",
+    "description": "Additional features for Lua PHP Module",
+	"type": "library",
+    "authors": [
+        {
+            "name": "Christiaan",
+            "email": "anotherhero@gmail.com"
+        }
+    ],
+    "require": {
+	    "ext-lua": "*"
+    },
+	"autoload": {
+		"psr-0" : {
+			"WebPower\\LuaSandbox" : "src"
+		}
+	}
+}
