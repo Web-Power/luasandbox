@@ -9,11 +9,11 @@
         }
     ],
     "require": {
-	    "ext-lua": "1.0.0"
+        "ext-lua": "1.0.0"
     },
-	"autoload": {
-		"psr-0" : {
-			"WebPower\\LuaSandbox" : "src"
-		}
-	}
+    "autoload": {
+        "psr-0" : {
+            "WebPower\\LuaSandbox" : "src"
+        }
+    }
 }

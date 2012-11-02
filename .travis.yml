@@ -1,0 +1,11 @@
+language: php
+
+php:
+  - "5.3"
+
+before_script:
+  - ./downloadAndCompileLua.sh
+  - sudo pecl install lua-1.0.0
+  - echo "extension=lua.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+  - curl -s http://getcomposer.org/installer | php
+  - COMPOSER_ROOT_VERSION=dev-master php composer.phar --dev install
