@@ -10,7 +10,7 @@ class LuaSandbox
 
     function __construct()
     {
-        if (!class_exists('\\Lua')) {
+        if (!extension_loaded('lua')) {
             throw new Exception('Lua PHP module not installed. See http://pecl.php.net/package/lua');
         }
         $this->sandbox = new Lua();
@@ -18,27 +18,38 @@ class LuaSandbox
 
     /**
      * @param string $lua
-     * @return int|float|string|array|callable|void
+     * @return int|float|string|array|\Closure|void
      * @throws LuaErrorException
      */
     public function run($lua)
     {
-        $level = error_reporting(0);
+        return $this->tryRunStringOrFile($lua, false);
+    }
 
-        $retval = $this->sandbox->eval($lua);
-
-        error_reporting($level);
-
-        if ($retval === false) {
-            $error = error_get_last();
-            $this->throwLuaError($error);
+    /**
+     * @param string $file
+     * @return int|float|string|array|\Closure|void
+     * @throws \InvalidArgumentException
+     * @throws LuaErrorException
+     */
+    public function runFile($file)
+    {
+        if (!is_file($file)) {
+            throw new \InvalidArgumentException('File not found');
         }
-        return $retval;
+        return $this->tryRunStringOrFile($file, true);
+    }
+
+    public function call($name, array $args = array())
+    {
+        $res = $this->sandbox->call($name, $args);
+
+        return $res;
     }
 
     public function assignCallable($name, $callback)
     {
-        $this->verifyVariableName($name);
+        $this->assertValidIdentifier($name);
         if (!is_callable($callback)) {
             throw new \InvalidArgumentException('Callback should be a callable');
         }
@@ -52,7 +63,7 @@ class LuaSandbox
      */
     public function assignVar($name, $value)
     {
-        $this->verifyVariableName($name);
+        $this->assertValidIdentifier($name);
         $this->sandbox->assign($name, $value);
         $ret = $this->run('return _G["'.$name.'"]');
         if ($ret != $value) {
@@ -64,66 +75,18 @@ class LuaSandbox
     public function unsetVar($name)
     {
         foreach ((array) $name as $global) {
+            $this->assertValidIdentifier($global);
             $this->sandbox->assign($global, null);
         }
     }
 
     public function assignObject($name, $object)
     {
-        $this->verifyVariableName($name);
-        $refl = new \ReflectionObject($object);
-        $methods = array();
-        foreach ($refl->getMethods() as $method) {
-            if ($method->isPublic() && !$method->isStatic() &&
-                    !$method->isConstructor() && !$method->isDestructor()) {
-                $methods[] = $method->name;
-            }
-        }
-
-        $lua_methods = $this->createLuaMethodsForObject($methods, $name, $object);
-        $getter = $this->createGetterForObject($object);
-        $setter = $this->createSetterForObject($object);
-
-        $this->sandbox->include(__DIR__.'/assignObject.lua');
-        $this->sandbox->call(
-            'assignObject_',
-            array($name, $lua_methods, $getter, $setter)
-        );
-        $this->unsetVar('assignObject_');
+        $proxy = new LuaObjectProxy($object);
+        $proxy->assignInSandbox($this, $name);
     }
 
-    private function createLuaMethodsForObject($methods, $name, $object)
-    {
-        $lua_methods = array();
-        foreach ($methods as $method) {
-            $global_name = '_assignObject__' . $name . '_' . $method;
-            $this->assignCallable($global_name, array($object, $method));
-            $lua_methods[$method] = $global_name;
-        }
-
-        return $lua_methods;
-    }
-
-    private function createGetterForObject($object)
-    {
-        $getter = '_assignObject__getter';
-        $this->assignCallable($getter, function($t, $key) use($object) {
-                return $object->{$key};
-            });
-        return $getter;
-    }
-
-    private function createSetterForObject($object)
-    {
-        $setter = '_assignObject__setter';
-        $this->assignCallable($setter, function($t, $key,
-                $value) use($object) {
-                $object->{$key} = $value;
-            });
-        return $setter;
-    }
-
-    private function verifyVariableName($name)
+    public function isValidIdentifier($name)
     {
         $reserved = array(
             'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for',
@@ -136,7 +99,30 @@ class LuaSandbox
             '/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/',
             $name
         );
-        if ($isReserved || $isInvalid) {
+
+        return $isReserved || $isInvalid;
+    }
+
+    private function tryRunStringOrFile($str, $file = false)
+    {
+        $level = error_reporting(0);
+
+        if (!$file)
+            $retval = $this->sandbox->eval($str);
+        else
+            $retval = $this->sandbox->include($str);
+
+        error_reporting($level);
+
+        if ($retval === false)
+            $this->throwLuaError(error_get_last());
+
+        return $retval;
+    }
+
+    public function assertValidIdentifier($name)
+    {
+        if ($this->isValidIdentifier($name)) {
             throw new InvalidVariableNameException($name);
         }
     }

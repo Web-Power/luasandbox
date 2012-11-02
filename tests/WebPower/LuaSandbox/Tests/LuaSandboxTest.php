@@ -35,6 +35,20 @@ CODE
         $this->assertEquals(20, $res);
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    function testNonExistingFile()
+    {
+        $this->obj->runFile('NonExistingFile');
+    }
+
+    function testValidFile()
+    {
+        $res = $this->obj->runFile(__DIR__.'/dumpGlobals.lua');
+        $this->assertInternalType('array', $res);
+    }
+
     function testUnset()
     {
         $this->obj->unsetVar(
@@ -141,6 +155,14 @@ CODE
     }
 
     /**
+     * @expectedException \InvalidArgumentException
+     */
+    function testNonFunctionCallback()
+    {
+        $this->obj->assignCallable('abc', 123);
+    }
+
+    /**
      * @expectedException WebPower\LuaSandbox\Exception
      */
     function testInvalidCallbackName()
@@ -194,5 +216,8 @@ CODE
         $obj->testProperty = 'hoi';
         $res = $this->obj->run('return myArray.testProperty');
         $this->assertEquals('hoi', $res);
+
+        $this->obj->run('myArray.testProperty = 123');
+        $this->assertEquals(123, $obj->testProperty);
     }
 }

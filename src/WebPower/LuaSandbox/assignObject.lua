@@ -1,3 +1,4 @@
+-- This function is used by the LuaObjectProxy
 function assignObject_(name, methods, getter, setter)
     local obj = {}
     for name, global_name in pairs(methods) do
