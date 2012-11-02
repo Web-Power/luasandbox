@@ -68,6 +68,45 @@ class LuaSandbox
         }
     }
 
+    public function assignObject($name, $object)
+    {
+        $this->verifyVariableName($name);
+        $refl = new \ReflectionObject($object);
+        $methods = array();
+        foreach ($refl->getMethods() as $method) {
+            if ($method->isPublic() && !$method->isStatic() &&
+                    !$method->isConstructor() && !$method->isDestructor()) {
+                $methods[] = $method->name;
+            }
+        }
+
+        $methods = array_flip($methods);
+        $this->assignVar('_assignObject_',
+            array(
+                'name' => $name,
+                'methods' => $methods
+            )
+        );
+
+        foreach ($methods as $method => $_) {
+            $this->assignCallable(
+                '_assignObject__'.$name.'_'.$method, array($object, $method)
+            );
+        }
+
+        $this->run(<<<CODE
+local name = _assignObject_.name
+local obj = {}
+for method in pairs(_assignObject_.methods) do
+     obj[method] = _G["_assignObject__" .. name .. "_".. method]
+     _G["_assignObject__" .. name .. "_".. method] = nil
+end
+_assignObject_ = nil
+_G[name] = obj
+CODE
+);
+    }
+
     private function verifyVariableName($name)
     {
         $reserved = array(

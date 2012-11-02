@@ -182,4 +182,13 @@ CODE
     {
         $this->obj->assignVar('break', 'test');
     }
+
+    function testAssigningObject()
+    {
+        $obj = new \ArrayObject(array());
+        $this->obj->assignObject('myArray', $obj);
+        $this->obj->run('myArray.append(10)');
+        $this->assertEquals(1, count($obj));
+        $this->assertEquals(10, $obj[0]);
+    }
 }
