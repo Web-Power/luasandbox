@@ -190,5 +190,9 @@ CODE
         $this->obj->run('myArray.append(10)');
         $this->assertEquals(1, count($obj));
         $this->assertEquals(10, $obj[0]);
+
+        $obj->testProperty = 'hoi';
+        $res = $this->obj->run('return myArray.testProperty');
+        $this->assertEquals('hoi', $res);
     }
 }

@@ -80,31 +80,47 @@ class LuaSandbox
             }
         }
 
-        $methods = array_flip($methods);
-        $this->assignVar('_assignObject_',
-            array(
-                'name' => $name,
-                'methods' => $methods
-            )
-        );
+        $lua_methods = $this->createLuaMethodsForObject($methods, $name, $object);
+        $getter = $this->createGetterForObject($object);
+        $setter = $this->createSetterForObject($object);
 
-        foreach ($methods as $method => $_) {
-            $this->assignCallable(
-                '_assignObject__'.$name.'_'.$method, array($object, $method)
-            );
+        $this->sandbox->include(__DIR__.'/assignObject.lua');
+        $this->sandbox->call(
+            'assignObject_',
+            array($name, $lua_methods, $getter, $setter)
+        );
+        $this->unsetVar('assignObject_');
+    }
+
+    private function createLuaMethodsForObject($methods, $name, $object)
+    {
+        $lua_methods = array();
+        foreach ($methods as $method) {
+            $global_name = '_assignObject__' . $name . '_' . $method;
+            $this->assignCallable($global_name, array($object, $method));
+            $lua_methods[$method] = $global_name;
         }
 
-        $this->run(<<<CODE
-local name = _assignObject_.name
-local obj = {}
-for method in pairs(_assignObject_.methods) do
-     obj[method] = _G["_assignObject__" .. name .. "_".. method]
-     _G["_assignObject__" .. name .. "_".. method] = nil
-end
-_assignObject_ = nil
-_G[name] = obj
-CODE
-);
+        return $lua_methods;
+    }
+
+    private function createGetterForObject($object)
+    {
+        $getter = '_assignObject__getter';
+        $this->assignCallable($getter, function($t, $key) use($object) {
+                return $object->{$key};
+            });
+        return $getter;
+    }
+
+    private function createSetterForObject($object)
+    {
+        $setter = '_assignObject__setter';
+        $this->assignCallable($setter, function($t, $key,
+                $value) use($object) {
+                $object->{$key} = $value;
+            });
+        return $setter;
     }
 
     private function verifyVariableName($name)
