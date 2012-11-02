@@ -42,7 +42,12 @@ class LuaSandbox
 
     public function call($name, array $args = array())
     {
-        $res = $this->sandbox->call($name, $args);
+        $this->assertValidIdentifier($name);
+        try {
+            $res = $this->sandbox->call($name, $args);
+        } catch(\LuaException $e) {
+            throw new Exception('Sandbox failed to call function', 0, $e);
+        }
 
         return $res;
     }

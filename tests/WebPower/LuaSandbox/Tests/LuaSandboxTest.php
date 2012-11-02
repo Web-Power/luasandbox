@@ -220,4 +220,27 @@ CODE
         $this->obj->run('myArray.testProperty = 123');
         $this->assertEquals(123, $obj->testProperty);
     }
+
+    function testCallingLuaFunction()
+    {
+        $this->obj->run('function testFunc(a, b) return a + b end');
+        $res = $this->obj->call('testFunc', array(1, 2));
+        $this->assertEquals(3, $res);
+    }
+
+    /**
+     * @expectedException \WebPower\LuaSandbox\Exception
+     */
+    function testCallingNonexistingLuaFunction()
+    {
+        $this->obj->call('nonexistingFunction');
+    }
+
+    /**
+     * @expectedException \WebPower\LuaSandbox\InvalidVariableNameException
+     */
+    function testCallingInvalidLuaFunction()
+    {
+        $this->obj->call('023_asb');
+    }
 }

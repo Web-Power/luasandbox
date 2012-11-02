@@ -14,10 +14,8 @@ class LuaModuleTest extends \PHPUnit_Framework_TestCase
 
     function testCallbackUsage()
     {
-        $this->assertEquals('Lua 5.1.5', Lua::LUA_VERSION);
-
         $sandbox = new Lua();
-        $this->assertEquals('Lua 5.1.5', $sandbox->getVersion());
+        $this->assertEquals(Lua::LUA_VERSION, $sandbox->getVersion());
 
         $res = $sandbox->registerCallback('phpCallback', array($this, 'luaCallback'));
         $this->assertSame($sandbox, $res);

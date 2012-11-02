@@ -1,15 +1,15 @@
 {
     "name": "webpower/luasandbox",
-    "description": "Additional features for Lua PHP Module",
+    "description": "Sandbox to run user supplied code using the Lua language",
 	"type": "library",
     "authors": [
         {
-            "name": "Christiaan",
+            "name": "Christiaan Baartse",
             "email": "anotherhero@gmail.com"
         }
     ],
     "require": {
-	    "ext-lua": "*"
+	    "ext-lua": "1.0.0"
     },
 	"autoload": {
 		"psr-0" : {
