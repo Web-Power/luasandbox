@@ -2,6 +2,8 @@
     "name": "webpower/luasandbox",
     "description": "Sandbox to run user supplied code using the Lua language",
 	"type": "library",
+    "license": "MIT",
+    "version": "1.0",
     "authors": [
         {
             "name": "Christiaan Baartse",
