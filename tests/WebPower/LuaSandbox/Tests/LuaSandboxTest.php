@@ -2,6 +2,7 @@
 namespace WebPower\LuaSandbox\Tests;
 
 use WebPower\LuaSandbox\LuaSandbox;
+use WebPower\LuaSandbox\LuaGlobals;
 
 class LuaSandboxTest extends \PHPUnit_Framework_TestCase
 {
@@ -51,20 +52,19 @@ CODE
 
     function testUnset()
     {
-        $this->obj->unsetVar(
-            array(
-                'dofile',
-                'loadfile',
-                'module',
-                'require',
-                'coroutine',
-                'debug',
-                'file',
-                'io',
-                'os',
-                'package',
-            )
+        $unsetKeys = array(
+            'dofile',
+            'loadfile',
+            'module',
+            'require',
+            'coroutine',
+            'debug',
+            'file',
+            'io',
+            'os',
+            'package',
         );
+        $this->obj->unsetVar($unsetKeys);
 
         $globals = $this->obj->run(<<<CODE
 local names = {}
@@ -75,40 +75,18 @@ table.sort(names)
 return names
 CODE
         );
+
+        $luaGlobals = LuaGlobals::getGlobals();
+        $luaGlobals = array_flip($luaGlobals);
+        foreach ($luaGlobals as $key => $i) {
+            $luaGlobals[$key] = !in_array($key, $unsetKeys);
+        }
+        $luaGlobals = array_filter($luaGlobals);
+        $luaGlobals = array_keys($luaGlobals);
+
         $this->assertEquals(
-            array(
-                1 => '_G',
-                '_VERSION',
-                'assert',
-                'collectgarbage',
-                'error',
-                'gcinfo',
-                'getfenv',
-                'getmetatable',
-                'ipairs',
-                'load',
-                'loadstring',
-                'math',
-                'newproxy',
-                'next',
-                'pairs',
-                'pcall',
-                'print',
-                'rawequal',
-                'rawget',
-                'rawset',
-                'select',
-                'setfenv',
-                'setmetatable',
-                'string',
-                'table',
-                'tonumber',
-                'tostring',
-                'type',
-                'unpack',
-                'xpcall',
-            ),
-            $globals
+            $luaGlobals,
+            array_values($globals)
         );
     }
 

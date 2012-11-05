@@ -2,6 +2,7 @@
 namespace WebPower\LuaSandbox\Tests;
 
 use \Lua;
+use WebPower\LuaSandbox\LuaGlobals;
 
 class LuaModuleTest extends \PHPUnit_Framework_TestCase
 {
@@ -63,54 +64,17 @@ CODE
             });
 
         $sandbox->eval(<<<CODE
+    local cb = phpCallback
+    _G.phpCallback = nil
 	for n,v in pairs(_G) do
-        phpCallback(n)
+        cb(n)
 	end
 CODE
         );
 
-        $this->assertEquals(array(
-                'string',
-                'xpcall',
-                'package',
-                'tostring',
-                'print',
-                'os',
-                'unpack',
-                'require',
-                'getfenv',
-                'setmetatable',
-                'next',
-                'assert',
-                'tonumber',
-                'io',
-                'rawequal',
-                'collectgarbage',
-                'getmetatable',
-                'module',
-                'rawset',
-                'phpCallback',
-                'math',
-                'debug',
-                'pcall',
-                'table',
-                'newproxy',
-                'type',
-                'coroutine',
-                '_G',
-                'select',
-                'gcinfo',
-                'pairs',
-                'rawget',
-                'loadstring',
-                'ipairs',
-                '_VERSION',
-                'dofile',
-                'setfenv',
-                'load',
-                'error',
-                'loadfile',
-            ), $globals);
+        sort($globals);
+
+        $this->assertEquals(LuaGlobals::getGlobals(), $globals);
     }
 
     function testUnsettingGlobalVars()
